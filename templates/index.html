@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinicalMatch AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1em 0;
+            text-align: center;
+        }
+        main {
+            padding: 2em;
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1em;
+            margin-bottom: 2em;
+        }
+        label {
+            align-self: center;
+        }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="submit"], button {
+            grid-column: span 2;
+            padding: 0.75em;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        input[type="submit"]:hover, button:hover {
+            background-color: #45a049;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            margin: 0.5em 0;
+            padding: 1em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        footer {
+            text-align: center;
+            padding: 1em 0;
+            background-color: #4CAF50;
+            color: white;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+        .recommendation-card {
+            border: 1px solid #4CAF50;
+            background-color: #e8f5e9;
+            padding: 1em;
+            border-radius: 8px;
+            margin-bottom: 1em;
+        }
+        .trial-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5em;
+            margin: 2em 0;
+            padding-bottom: 4em; /* Add space for fixed footer */
+        }
+        .trial-card {
+            border: 1px solid #ddd;
+            padding: 1.5em;
+            border-radius: 12px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .trial-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .trial-card h3 {
+            color: #1b5e20;
+            font-size: 1.3em;
+            margin-bottom: 1em;
+            border-bottom: 2px solid #e8f5e9;
+            padding-bottom: 0.5em;
+        }
+        .trial-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5em;
+        }
+        .description-section {
+            background-color: #f8f9fa;
+            padding: 1.2em;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .info-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1em;
+            padding: 0.5em;
+        }
+        .description {
+            line-height: 1.6;
+            color: #444;
+        }
+        .location, .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            color: #666;
+        }
+        .trial-details strong {
+            color: #2e7d32;
+        }
+    </style>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>ClinicalMatch AI</h1>
+    </header>
+    <main>
+        <h2>Patient Information</h2>
+        <form method="post">
+            <label for="age">Age:</label>
+            <input type="number" name="age" min="0" max="120" value="{{ patient_data.get('age', 30) }}" required>
+            
+            <label for="condition">Medical Condition:</label>
+            <input type="text" name="condition" value="{{ patient_data.get('condition', '') }}" required>
+            
+            <label for="location">Location (City, State/Country):</label>
+            <input type="text" name="location" value="{{ patient_data.get('location', '') }}">
+            
+            <label for="symptoms">Symptoms:</label>
+            <textarea name="symptoms" rows="4" cols="50">{{ patient_data.get('symptoms', '') }}</textarea>
+            
+            <label for="previous_treatment">Previous Treatments:</label>
+            <textarea name="previous_treatment" rows="4" cols="50">{{ patient_data.get('previous_treatment', '') }}</textarea>
+            
+            <input type="submit" value="Match Trial">
+            <!-- <button type="submit">Submit</button> -->
+        </form>
+
+        {% if recommendation %}
+        <h2>Recommendation</h2>
+        <div class="recommendation-card">
+            <h3>Your Matching Recommendation</h3>
+            <p>{{ recommendation }}</p>
+        </div>
+        {% endif %}
+        
+        {% if trials %}
+        <h2>Clinical Trials</h2>
+        <p>Here are some clinical trials that might be suitable for you:</p>
+        <div class="trial-container">
+            {% for trial in trials %}
+                {% if trial.protocolSection %}
+                <div class="trial-card">
+                    <h3>{{ trial.protocolSection.identificationModule.briefTitle }}</h3>
+                    <div class="trial-details">
+                        <div class="description-section">
+                            <p class="description"><strong>Description:</strong><br>
+                            {{ trial.protocolSection.identificationModule.detailedDescription }}</p>
+                        </div>
+                        <div class="info-section">
+                            <p class="location"><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> 
+                            {{ trial.protocolSection.identificationModule.location }}</p>
+                            <p class="status"><i class="fas fa-info-circle"></i> <strong>Status:</strong> 
+                            {{ trial.protocolSection.statusModule.overallStatus }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h2>Revisit Consent</h2>
+        <input type="checkbox" id="revisitConsent" name="revisitConsent">
+        <label for="revisitConsent">Revisit Consent</label>
+        <p>Here you can review and modify your consent for participating in clinical trials.</p>
+    </main>
+    <footer>
+        <p>Powered by DeepSeek AI and ClinicalTrials.gov</p>
+    </footer>
+</body>
+</html>
